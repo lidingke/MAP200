@@ -25,7 +25,7 @@ class Model(Thread,QObject):
     'wave':':SOURce:WAVelength 1,1,{}',
     'chan':':PATH:CHANnel 1,1,1,{}',
     'mea':':MEASure:IL? 1,1'}
-        self.data = [('通道数','波长','IL','ORL')]
+        self.data = [('测试次数','通道数','波长','IL','ORL')]
 
 
 
@@ -47,10 +47,11 @@ class Model(Thread,QObject):
         else:
             return
 
-    def getData(self,channel,wave,step,loop):
+    def getData(self,channel,wave,stepNtime):
+        # switchStep, switchTime, testStep, testTime = stepNtime
         if self.sock:
             self.saveReady.emit(True)
-            Thread(target= self._getDataFun,args=(channel, wave,step,loop),daemon = True).start()
+            Thread(target= self._getDataFun,args=(channel, wave,stepNtime),daemon = True).start()
             # Thread(target= self._get,args=(channel, wave,step,loop),daemon = True).start()
             # self._getDataFun()
         else:
@@ -58,16 +59,31 @@ class Model(Thread,QObject):
 
 
 
-    def _get(self,channel,wave,step,loop):
-        self.sock.sendall(bytes( ':SOURce:WAVelength 1,1,1550\r\n'.encode('utf-8')))
-        # insertLoss  = self.sock.recv(100)
-        # print('value ',insertLoss)
+    # def _get(self,channel,wave,step,loop):
+    #     self.sock.sendall(bytes( ':SOURce:WAVelength 1,1,1550\r\n'.encode('utf-8')))
+    #     # insertLoss  = self.sock.recv(100)
+    #     # print('value ',insertLoss)
 
-    def _getDataFun(self,channel,wave,step,loop):
+    def _getDataFun(self,channel,wave,stepNtime):
+        switchStep, switchTime, testStep, testTime = stepNtime
+        self.testTime = testTime
+        self.testStep = testStep
         print('getlist:',channel,wave)
         # self.sock.sendall(bytes( '*REM'.encode('utf-8'))+b'\r\n')
         self.sock.sendall(bytes( '*REM'.encode('utf-8'))+b'\r\n')
         self.sock.sendall(bytes( '*CLS'.encode('utf-8'))+b'\r\n')
+        for time_ in range(1,testTime+1):
+            self._testLoop(channel,wave,switchStep,time_)
+            time.sleep(testStep*60)
+            print('xls',self.data)
+        # fileName = self._fileName()
+        xlsCommit  =' 时长:' + str(self.testStep) + '分 次数' + str(self.testTime)
+        # self.data.append(parameter)
+        XlsWrite(fileName = self._fileName(), xlsContain= self.data, xlsCommit = xlsCommit).runSave()
+        self.data = [('测试次数','通道数','波长','IL','ORL')]
+        self.saveReady.emit(False)
+
+    def _testLoop(self,channel,wave,step,time_):
         for x in channel:
             # self.data
             cmd = ':PATH:CHANnel 1,1,1,{}'.format(x)
@@ -101,15 +117,10 @@ class Model(Thread,QObject):
                     except socket.timeout:
                         print('returnLoss timeout')
 
-                self.data.append((x,y,insertLoss,returnLoss))
+                self.data.append((time_,x,y,insertLoss,returnLoss))
                 print('send msg to server CH = {} WAVE = {}\n\
                     insertLoss ={},returnLoss ={}'.format(x,y,insertLoss,returnLoss))
                 time.sleep(step)
-        print('xls',self.data)
-        # fileName = self._fileName()
-        XlsWrite(fileName = self._fileName(), xlsContain= self.data).runSave()
-        self.data = [('通道数','波长','IL','ORL')]
-        self.saveReady.emit(False)
 
     def run(self):
         while  True:
@@ -134,17 +145,20 @@ class Model(Thread,QObject):
 
     def _fileName(self):
         timeShow = time.strftime('%Y_%m_%d_%H_%M_%S',time.localtime(int(time.time())))
+        # timeShow = '时间:' + timeShow + ' 时长:' + str(self.testStep) + '分 次数' + str(self.testTime)
+        # print('timeShow',timeShow)
         return timeShow+'.xls'
 
 class XlsWrite(object):
         """docstring for XlsWrite"""
-        def __init__(self, fileName = 'test.xls', sheetName = 'Sheet1', xlsContain = (())):
+        def __init__(self, fileName = 'test.xls', sheetName = 'Sheet1', xlsContain = (()), xlsCommit = ''):
                 super(XlsWrite, self).__init__()
                 self.fileName = fileName
                 self.sheetName = sheetName
                 self.workbook = xlwt.Workbook(encoding= 'utf-8')
                 self.booksheet = self.workbook.add_sheet(self.sheetName, cell_overwrite_ok= True)
                 self.xlsContain = xlsContain
+                self.xlsCommit = xlsCommit
 
         def runSave(self):
                 # workbook.add_sheet('Sheet2')
@@ -153,4 +167,5 @@ class XlsWrite(object):
                             if type(col) == bytes:
                                 col = col.decode('utf-8')
                             self.booksheet.write(i, j, col)
+                self.booksheet.write(i+1, 0, self.xlsCommit)
                 self.workbook.save(self.fileName)

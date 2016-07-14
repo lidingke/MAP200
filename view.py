@@ -8,7 +8,7 @@ import pdb
 class View(QMainWindow,Ui_MainWindow):
     """docstring for View"""
     ipNport = pyqtSignal(object,object)
-    checked = pyqtSignal(object,object,object,object)
+    checked = pyqtSignal(object,object,object)
     returnCheck = pyqtSignal(object)
 
     def __init__(self,):
@@ -20,6 +20,8 @@ class View(QMainWindow,Ui_MainWindow):
         self.selectAllWave.clicked.connect(self._selectAllWave)
         self.selectAllChan.clicked.connect(self._selectAllChan)
         self.returnLossCheck.clicked.connect(self._returnLossCheck)
+        # self.switchStep.setSuffix('秒')
+        # self.testStep.setSuffix('分')
 
     def _toServer(self):
         ip = self.ipaddr.text()
@@ -41,9 +43,21 @@ class View(QMainWindow,Ui_MainWindow):
                 checkedWave.append(x.text()[:-2])
         print('emit:',checkedChannel,checkedWave
             ,type(checkedChannel),type(checkedWave))
-        step = int(self.timeStep.text())
-        loop = int(self.loopTime.text())
-        self.checked.emit(checkedChannel,checkedWave,step,loop)
+        try:
+            switchStep = int(self.switchStep.text())
+            testTime = int(self.testTime.text())
+        except Exception as e :
+            QMessageBox().warning(self,'输入不正常', str(e))
+            return
+        try:
+            testStep = float(self.testStep.text())
+        except Exception as e:
+            QMessageBox().warning(self,'输入不正常', str(e))
+            return
+
+        switchTime = 0
+
+        self.checked.emit(checkedChannel,checkedWave,(switchStep, switchTime, testStep, testTime))
 
     def enableSaveButton(self,_bool):
         self.save.setDisabled(_bool)

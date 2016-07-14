@@ -14,14 +14,14 @@ class DataHand(object):
         cursor = conn.cursor()
         try:
             strEx='create table if not exists '+table+\
-            ' (time float(17), power float(10), data varchar(10))'
+            ' ( power varchar(10), data varchar(10))'
             cursor.execute(strEx)
         except Exception as e:
             raise e
         cursor.close()
         conn.commit()
         conn.close()
-        return sqlTableName
+        # return sqlTableName
 
     def saveData(self,table,):
         pass
