@@ -6,6 +6,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 import pdb
 import sys
 sys.path.append("..")
+from script.datahand import DataHand
 # import pdb
 
 class Model(Thread,QObject):
@@ -26,6 +27,7 @@ class Model(Thread,QObject):
     'chan':':PATH:CHANnel 1,1,1,{}',
     'mea':':MEASure:IL? 1,1'}
         self.data = [('测试次数','通道数','波长','IL','ORL')]
+        self.datahand = DataHand()
 
 
 
@@ -68,20 +70,42 @@ class Model(Thread,QObject):
         switchStep, switchTime, testStep, testTime = stepNtime
         self.testTime = testTime
         self.testStep = testStep
+        self.waveNumber = len(wave)
+        self.wavelenght = wave
         print('getlist:',channel,wave)
         # self.sock.sendall(bytes( '*REM'.encode('utf-8'))+b'\r\n')
         self.sock.sendall(bytes( '*REM'.encode('utf-8'))+b'\r\n')
         self.sock.sendall(bytes( '*CLS'.encode('utf-8'))+b'\r\n')
+        self.fileName,self.tableName = self._fileName()
+        self.datahand.initTable(self.tableName)
         for time_ in range(1,testTime+1):
             self._testLoop(channel,wave,switchStep,time_)
-            time.sleep(testStep*60)
-            print('xls',self.data)
+            if time_ != testTime+1:
+                time.sleep(testStep*60)
+            # print('xls',self.data)
         # fileName = self._fileName()
-        xlsCommit  =' 时长:' + str(self.testStep) + '分 次数' + str(self.testTime)
+        self.finallySave()
+
         # self.data.append(parameter)
-        XlsWrite(fileName = self._fileName(), xlsContain= self.data, xlsCommit = xlsCommit).runSave()
-        self.data = [('测试次数','通道数','波长','IL','ORL')]
         self.saveReady.emit(False)
+
+    def finallySave(self):
+        self.dataGeted = self.datahand.getTableData(self.tableName)
+        listName = ('No', 'channel', 'wave', 'IL', 'ORL')
+        self.dataListGeted = self.datahand.getTableDataList(self.tableName,listName)
+        dataL = self.dataListGeted
+        waveNum = self.waveNumber
+        result = [dataL[0][::waveNum],dataL[1][::waveNum]]
+        for lossNum in range(3,5):
+            for x in range(0,waveNum):
+                # print('[{}][{}::{}]'.format(lossNum,x,waveNum))
+                result.append(dataL[lossNum][x::waveNum])
+        # pdb.set_trace()
+        # self.dataGeted = [('测试次数','通道数','波长','IL','ORL'),self.dataGeted]
+        xlsCommit  =' 时长:' + str(self.testStep) + '分，次数' + str(self.testTime)
+        XlsWrite(fileName = self.fileName, xlsContain = result, xlsCommit = (xlsCommit,self.wavelenght)).runSave()
+        # self.data =
+
 
     def _testLoop(self,channel,wave,step,time_):
         for x in channel:
@@ -116,11 +140,15 @@ class Model(Thread,QObject):
                         returnLoss = self.sock.recv(100)
                     except socket.timeout:
                         print('returnLoss timeout')
+                data = (time_,x,y,insertLoss,returnLoss)
+                self.datahand.save2Sql(self.tableName, data)
+                self.data.append(data)
 
-                self.data.append((time_,x,y,insertLoss,returnLoss))
                 print('send msg to server CH = {} WAVE = {}\n\
                     insertLoss ={},returnLoss ={}'.format(x,y,insertLoss,returnLoss))
                 time.sleep(step)
+
+
 
     def run(self):
         while  True:
@@ -147,25 +175,35 @@ class Model(Thread,QObject):
         timeShow = time.strftime('%Y_%m_%d_%H_%M_%S',time.localtime(int(time.time())))
         # timeShow = '时间:' + timeShow + ' 时长:' + str(self.testStep) + '分 次数' + str(self.testTime)
         # print('timeShow',timeShow)
-        return timeShow+'.xls'
+        return (timeShow+'.xls', 'R' + timeShow)
 
 class XlsWrite(object):
         """docstring for XlsWrite"""
-        def __init__(self, fileName = 'test.xls', sheetName = 'Sheet1', xlsContain = (()), xlsCommit = ''):
+        def __init__(self, fileName = 'test.xls', sheetName = 'Sheet1',
+         xlsContain = (()), xlsCommit = (),):#
                 super(XlsWrite, self).__init__()
-                self.fileName = fileName
+                self.fileName = 'script\\xlsdata\\' + fileName
                 self.sheetName = sheetName
                 self.workbook = xlwt.Workbook(encoding= 'utf-8')
                 self.booksheet = self.workbook.add_sheet(self.sheetName, cell_overwrite_ok= True)
                 self.xlsContain = xlsContain
-                self.xlsCommit = xlsCommit
+                self.xlsCommit = xlsCommit[0]
+                self.wavelength = xlsCommit[1]
+
 
         def runSave(self):
-                # workbook.add_sheet('Sheet2')
-                for i,row in enumerate(self.xlsContain):
-                        for j,col in enumerate(row):
-                            if type(col) == bytes:
-                                col = col.decode('utf-8')
-                            self.booksheet.write(i, j, col)
-                self.booksheet.write(i+1, 0, self.xlsCommit)
-                self.workbook.save(self.fileName)
+            # pdb.set_trace()
+            # workbook.add_sheet('Sheet2')
+            self.booksheet.write(0,0,'次数')
+            self.booksheet.write(0,0,'通道')
+            for x in range(2,4):
+                for i,row in enumerate(self.wavelength):
+                    self.booksheet.write(0, i + x, str(row))
+
+            for i,row in enumerate(self.xlsContain):
+                    for j,col in enumerate(row):
+                        if type(col) == bytes:
+                            col = col.decode('utf-8')
+                        self.booksheet.write(j+1, i, col)
+            self.booksheet.write(0, 6, self.xlsCommit)
+            self.workbook.save(self.fileName)

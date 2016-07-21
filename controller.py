@@ -1,7 +1,7 @@
 # from    view        import View
 import sys
 sys.path.append("..")
-from model import Model
+from script.model import Model
 from PyQt5.QtCore import QObject, pyqtSignal
 
 

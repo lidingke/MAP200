@@ -1,4 +1,4 @@
-from UI.mainUI import Ui_MainWindow
+from script.UI.mainUI import Ui_MainWindow
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5.QtCore import pyqtSignal , pyqtSlot
 import pdb
@@ -35,11 +35,11 @@ class View(QMainWindow,Ui_MainWindow):
         checkedWave = []
         for x in self._channelList():
             if x.isChecked():
-                print(x,x.text(),x.isChecked())
+                # print(x,x.text(),x.isChecked())
                 checkedChannel.append(x.text()[2:])
         for x in self._waveList():
             if x.isChecked():
-                print(x,x.text(),x.isChecked())
+                # print(x,x.text(),x.isChecked())
                 checkedWave.append(x.text()[:-2])
         print('emit:',checkedChannel,checkedWave
             ,type(checkedChannel),type(checkedWave))
