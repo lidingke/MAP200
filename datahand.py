@@ -16,7 +16,6 @@ class DataHand(object):
             #[('测试次数','通道数','波长','IL','ORL')]
             strEx='create table if not exists '+table+\
             ' ( No varchar(10), channel varchar(10), wave varchar(10),IL varchar(10), ORL varchar(10))'
-            # print(strEx)
             cursor.execute(strEx)
         except Exception as e :
             raise e
@@ -26,7 +25,6 @@ class DataHand(object):
         # return sqlTableName
 
     def save2Sql(self,sqlTableName,data):
-
         conn = sqlite3.connect(self.dbName)
         cursor = conn.cursor()
         try:

@@ -10,24 +10,45 @@ class View(QMainWindow,Ui_MainWindow):
     ipNport = pyqtSignal(object,object)
     checked = pyqtSignal(object,object,object)
     returnCheck = pyqtSignal(object)
+    manageThread = pyqtSignal(object)
+
 
     def __init__(self,):
         super(View, self).__init__()
         # self.arg = arg
         self.setupUi(self)
         self.connect.clicked.connect(self._toServer)
-        self.save.clicked.connect(self._saveChannelNWave)
+        self.save.status = 'start'
+        self.save.setDisabled(True)
+        self.save.clicked.connect(self._manageThread)
         self.selectAllWave.clicked.connect(self._selectAllWave)
         self.selectAllChan.clicked.connect(self._selectAllChan)
         self.returnLossCheck.clicked.connect(self._returnLossCheck)
         # self.switchStep.setSuffix('秒')
         # self.testStep.setSuffix('分')
+        self.isConnect = False
 
     def _toServer(self):
+        self.save.setDisabled(False)
         ip = self.ipaddr.text()
         port = int(self.port.text())
         print('emit: ',ip,port,type(ip),type(port))
         self.ipNport.emit(ip,port)
+
+    def _manageThread(self):
+        if self.isConnect:
+
+            if self.save.status == 'start':
+                isset = self._saveChannelNWave()
+                if isset:
+                    self.save.status = 'stop'
+                    self.save.setText("停止测试")
+            elif self.save.status == 'stop':
+                self._stopThread()
+                self.save.status = 'start'
+                self.save.setText("开始测试")
+        else:
+            QMessageBox().warning(self, '连接未成功' )
 
     def _saveChannelNWave(self):
         # self.save.setDisabled(True)
@@ -56,8 +77,14 @@ class View(QMainWindow,Ui_MainWindow):
             return
 
         switchTime = 0
+        if checkedChannel and checkedWave:
+            self.checked.emit(checkedChannel,checkedWave,(switchStep, switchTime, testStep, testTime))
+            return True
+        else:
+            return False
 
-        self.checked.emit(checkedChannel,checkedWave,(switchStep, switchTime, testStep, testTime))
+    def _stopThread(self):
+        self.manageThread.emit('stop')
 
     def enableSaveButton(self,_bool):
         self.save.setDisabled(_bool)
@@ -81,6 +108,8 @@ class View(QMainWindow,Ui_MainWindow):
     def _returnLossCheck(self):
         self.returnCheck.emit(self.returnLossCheck.isChecked())
 
+    def connectSuccess(self,bool_):
+        self.isConnect = bool_
 
     # @pyqtSlot(str)
     def warningBox(self,text):

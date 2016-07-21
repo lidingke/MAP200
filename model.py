@@ -13,9 +13,9 @@ class Model(Thread,QObject):
     """docstring for Model"""
     warningPause = pyqtSignal(object)
     saveReady = pyqtSignal(object)
+    connectSuccess = pyqtSignal(object)
 
     def __init__(self, ):
-        #
         Thread.__init__(self)
         QObject.__init__(self)
         super(Model, self).__init__()
@@ -30,8 +30,6 @@ class Model(Thread,QObject):
         self.datahand = DataHand()
 
 
-
-
     def toConnect(self,ip,port):
         print('get:',ip,port)
         if self.sock:
@@ -41,8 +39,8 @@ class Model(Thread,QObject):
             self.sock.settimeout(2)
             try:
                 self.sock.connect((ip,port))
+                self.connectSuccess.emit(True)
                 print('sock:',self.sock)
-                # self.sock.sendall(b'hello')
             except Exception as e:
                 print("e:",e)
                 self.warningPause.emit('链接设置,'+str(e))
@@ -50,21 +48,16 @@ class Model(Thread,QObject):
             return
 
     def getData(self,channel,wave,stepNtime):
-        # switchStep, switchTime, testStep, testTime = stepNtime
         if self.sock:
-            self.saveReady.emit(True)
-            Thread(target= self._getDataFun,args=(channel, wave,stepNtime),daemon = True).start()
-            # Thread(target= self._get,args=(channel, wave,step,loop),daemon = True).start()
-            # self._getDataFun()
+            # self.saveReady.emit(True)
+            self.stopedThread = stopedThread(target= self._getDataFun,args=(channel, wave,stepNtime))
+            self.stopedThread.start()
         else:
             self.warningPause.emit('没有链接')
 
-
-
-    # def _get(self,channel,wave,step,loop):
-    #     self.sock.sendall(bytes( ':SOURce:WAVelength 1,1,1550\r\n'.encode('utf-8')))
-    #     # insertLoss  = self.sock.recv(100)
-    #     # print('value ',insertLoss)
+    def manageThreading(self,stats):
+        if stats == 'stop':
+            self.stopedThread.raiseStop()
 
     def _getDataFun(self,channel,wave,stepNtime):
         switchStep, switchTime, testStep, testTime = stepNtime
@@ -87,7 +80,7 @@ class Model(Thread,QObject):
         self.finallySave()
 
         # self.data.append(parameter)
-        self.saveReady.emit(False)
+        # self.saveReady.emit(False)
 
     def finallySave(self):
         self.dataGeted = self.datahand.getTableData(self.tableName)
@@ -176,6 +169,19 @@ class Model(Thread,QObject):
         # timeShow = '时间:' + timeShow + ' 时长:' + str(self.testStep) + '分 次数' + str(self.testTime)
         # print('timeShow',timeShow)
         return (timeShow+'.xls', 'R' + timeShow)
+
+
+class stopedThread(Thread):
+    """docstring for stopedThread"""
+    def __init__(self,*args, **kwargs ):
+        super(stopedThread, self).__init__(*args, **kwargs)
+        self.daemon = True
+        # self.arg = arg
+
+    def raiseStop(self):
+        # pass
+        raise Exception("stop threading","e")
+
 
 class XlsWrite(object):
         """docstring for XlsWrite"""
