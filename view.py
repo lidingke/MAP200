@@ -1,6 +1,10 @@
 from script.UI.mainUI import Ui_MainWindow
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QPushButton
 from PyQt5.QtCore import pyqtSignal , pyqtSlot
+
+from script.toolkit import SaveButton, PauseButton
+from script.model import StopThreadExcept
+
 import pdb
 # import sys
 # sys.path.append("..")
@@ -11,21 +15,36 @@ class View(QMainWindow,Ui_MainWindow):
     checked = pyqtSignal(object,object,object)
     returnCheck = pyqtSignal(object)
     manageThread = pyqtSignal(object)
+    pauseStatus = pyqtSignal(object)
 
 
     def __init__(self,):
         super(View, self).__init__()
+        """replace save4Replace to SaveButton
+        """
         # self.arg = arg
         self.setupUi(self)
         self.connect.clicked.connect(self._toServer)
-        self.save.status = 'start'
-        self.save.setDisabled(True)
+        # self.save.setDisabled(True)
+        # print('before save id',id(self.save))
+        # pdb.set_trace()
+        # self.save.hide()
+        widget = self.startGridLayout.parentWidget()
+
+        self.save = SaveButton(widget)
+        self.startGridLayout.replaceWidget(self.save4Replace, self.save)
+        self.save4Replace.hide()
         self.save.clicked.connect(self._manageThread)
+
+        # self.pause = PauseButton(widget)
+        # self.startGridLayout.replaceWidget(self.pause4Replace, self.pause)
+        # self.pause4Replace.hide()
+        # self.pause.clicked.connect(self._pauseStatus)
+
         self.selectAllWave.clicked.connect(self._selectAllWave)
         self.selectAllChan.clicked.connect(self._selectAllChan)
         self.returnLossCheck.clicked.connect(self._returnLossCheck)
-        # self.switchStep.setSuffix('秒')
-        # self.testStep.setSuffix('分')
+
         self.isConnect = False
 
     def _toServer(self):
@@ -36,19 +55,21 @@ class View(QMainWindow,Ui_MainWindow):
         self.ipNport.emit(ip,port)
 
     def _manageThread(self):
+        print('clicked')
         if self.isConnect:
-
             if self.save.status == 'start':
-                isset = self._saveChannelNWave()
+                try:
+                    isset = self._saveChannelNWave()
+                except Exception :
+                    QMessageBox().warning(self,'取消线程', '线程已取消')
+
                 if isset:
-                    self.save.status = 'stop'
-                    self.save.setText("停止测试")
+                    self.save.setStop()
             elif self.save.status == 'stop':
                 self._stopThread()
-                self.save.status = 'start'
-                self.save.setText("开始测试")
+                self.save.setStart()
         else:
-            QMessageBox().warning(self, '连接未成功' )
+            QMessageBox().warning(self, '警告' , '无正确链接')
 
     def _saveChannelNWave(self):
         # self.save.setDisabled(True)
@@ -110,6 +131,9 @@ class View(QMainWindow,Ui_MainWindow):
 
     def connectSuccess(self,bool_):
         self.isConnect = bool_
+
+    def _pauseStatus(self):
+        self.pauseStatus.emit(self.pause.status)
 
     # @pyqtSlot(str)
     def warningBox(self,text):

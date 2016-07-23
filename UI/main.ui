@@ -335,16 +335,23 @@
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>180</x>
       <y>270</y>
       <width>81</width>
-      <height>73</height>
+      <height>76</height>
      </rect>
     </property>
-    <layout class="QGridLayout" name="gridLayout_4">
+    <layout class="QGridLayout" name="startGridLayout">
+     <item row="1" column="0">
+      <widget class="QPushButton" name="save4Replace">
+       <property name="text">
+        <string>开始测试R</string>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="0">
       <widget class="QCheckBox" name="returnLossCheck">
        <property name="text">
@@ -352,16 +359,9 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="save">
-       <property name="text">
-        <string>开始测试</string>
-       </property>
-      </widget>
-     </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -445,6 +445,14 @@
      </item>
     </layout>
    </widget>
+   <zorder>groupBox</zorder>
+   <zorder>groupBox_2</zorder>
+   <zorder>layoutWidget</zorder>
+   <zorder>layoutWidget</zorder>
+   <zorder>layoutWidget</zorder>
+   <zorder>save4Replace</zorder>
+   <zorder>returnLossCheck</zorder>
+   <zorder>pause4Replace</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

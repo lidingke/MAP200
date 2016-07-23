@@ -16,9 +16,13 @@ class Controller(QObject):
         self._view.checked.connect(self._model.getData)
         self._view.returnCheck.connect(self._model.returnCheck)
         self._view.manageThread.connect(self._model.manageThreading)
+        self._view.pauseStatus.connect(self._model.pauseThreading)
+
+
         self._model.warningPause.connect(self._view.warningBox)
         self._model.saveReady.connect(self._view.enableSaveButton)
         self._model.connectSuccess.connect(self._view.connectSuccess)
+
 
     def show(self):
         self._view.show()

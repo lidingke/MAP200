@@ -2,7 +2,7 @@ import socket
 from threading import Thread
 import time
 import xlwt
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
 import pdb
 import sys
 sys.path.append("..")
@@ -50,14 +50,18 @@ class Model(Thread,QObject):
     def getData(self,channel,wave,stepNtime):
         if self.sock:
             # self.saveReady.emit(True)
-            self.stopedThread = stopedThread(target= self._getDataFun,args=(channel, wave,stepNtime))
+            self.stopedThread = stopedThread(target= self._getDataFun, args=(channel, wave,stepNtime),daemon = True)
             self.stopedThread.start()
         else:
             self.warningPause.emit('没有链接')
 
     def manageThreading(self,stats):
         if stats == 'stop':
-            self.stopedThread.raiseStop()
+            try:
+                self.stopedThread.raiseStop()
+
+            except Exception as e:
+                self.warningPause.emit('线程已终止')
 
     def _getDataFun(self,channel,wave,stepNtime):
         switchStep, switchTime, testStep, testTime = stepNtime
@@ -81,6 +85,9 @@ class Model(Thread,QObject):
 
         # self.data.append(parameter)
         # self.saveReady.emit(False)
+
+    def beforeRaise(self):
+        self.finallySave()
 
     def finallySave(self):
         self.dataGeted = self.datahand.getTableData(self.tableName)
@@ -141,6 +148,14 @@ class Model(Thread,QObject):
                     insertLoss ={},returnLoss ={}'.format(x,y,insertLoss,returnLoss))
                 time.sleep(step)
 
+    def pauseThreading(self,status):
+        if status == 'pause':
+            self.pause = PauseThread()
+            self.pause.start()
+            self.pause.join()
+        elif status == 'goon':
+
+            self.pause.raiseStop()
 
 
     def run(self):
@@ -179,8 +194,28 @@ class stopedThread(Thread):
         # self.arg = arg
 
     def raiseStop(self):
-        # pass
-        raise Exception("stop threading","e")
+        self.beforeRaise()
+        raise RuntimeWarning()
+
+    def beforeRaise(self):
+        pass
+
+class PauseThread(stopedThread):
+    """docstring for PauseThread"""
+    def __init__(self, ):
+        super(PauseThread, self).__init__()
+
+    def run(self):
+        while True:
+            print('thread pause')
+            time.sleep(10)
+
+class StopThreadExcept(Exception):
+    """docstring for StopThreadExcept"""
+    def __init__(self,):
+        super(StopThreadExcept, self).__init__()
+        # self.arg = arg
+
 
 
 class XlsWrite(object):
