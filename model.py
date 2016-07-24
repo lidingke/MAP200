@@ -1,4 +1,5 @@
 import socket
+import threading
 from threading import Thread
 import time
 import xlwt
@@ -23,11 +24,13 @@ class Model(Thread,QObject):
         self.sock = False
         self.returnCheckNeed = False
         self.msgdict = {'rem':'*REM',
-    'wave':':SOURce:WAVelength 1,1,{}',
-    'chan':':PATH:CHANnel 1,1,1,{}',
-    'mea':':MEASure:IL? 1,1'}
+            'wave':':SOURce:WAVelength 1,1,{}',
+            'chan':':PATH:CHANnel 1,1,1,{}',
+            'mea':':MEASure:IL? 1,1'}
         self.data = [('测试次数','通道数','波长','IL','ORL')]
         self.datahand = DataHand()
+        self.needStop = False
+
 
 
     def toConnect(self,ip,port):
@@ -49,19 +52,28 @@ class Model(Thread,QObject):
 
     def getData(self,channel,wave,stepNtime):
         if self.sock:
-            # self.saveReady.emit(True)
-            self.stopedThread = stopedThread(target= self._getDataFun, args=(channel, wave,stepNtime),daemon = True)
+            # self.stopedThread = StopedThread()
+            # self.stopedThread.start()
+            # self.stopedThread.childThread(target= self._getDataFun, args=(channel, wave, stepNtime), daemon = True)
+
+            self.stopedThread = StoppableThread(target= self._getDataFun, args=(channel, wave, stepNtime), daemon = True)
             self.stopedThread.start()
+            # self.stopedThread.start()
         else:
             self.warningPause.emit('没有链接')
 
     def manageThreading(self,stats):
+        print('get in manageThreading ',stats)
         if stats == 'stop':
-            try:
-                self.stopedThread.raiseStop()
+            # try:
+                # self.stopedThread.setBreak()
+            # self.stopedThread.stop()
+            self.needStop = True
+        else:
+            self.needStop = False
 
-            except Exception as e:
-                self.warningPause.emit('线程已终止')
+            # except Exception:
+            #     self.warningPause.emit('线程已终止')
 
     def _getDataFun(self,channel,wave,stepNtime):
         switchStep, switchTime, testStep, testTime = stepNtime
@@ -77,6 +89,11 @@ class Model(Thread,QObject):
         self.datahand.initTable(self.tableName)
         for time_ in range(1,testTime+1):
             self._testLoop(channel,wave,switchStep,time_)
+            if self.needStop == True:
+                print('stop in get data ', self.needStop)
+                self.saveReady.emit(True)
+                self.finallySave()
+                return
             if time_ != testTime+1:
                 time.sleep(testStep*60)
             # print('xls',self.data)
@@ -87,6 +104,9 @@ class Model(Thread,QObject):
         # self.saveReady.emit(False)
 
     def beforeRaise(self):
+        self.finallySave()
+
+    def saveXls(self):
         self.finallySave()
 
     def finallySave(self):
@@ -146,16 +166,19 @@ class Model(Thread,QObject):
 
                 print('send msg to server CH = {} WAVE = {}\n\
                     insertLoss ={},returnLoss ={}'.format(x,y,insertLoss,returnLoss))
+                if self.needStop == True:
+                    print('needStop in _testLoop', self.needStop)
+                    return
                 time.sleep(step)
 
-    def pauseThreading(self,status):
-        if status == 'pause':
-            self.pause = PauseThread()
-            self.pause.start()
-            self.pause.join()
-        elif status == 'goon':
+    # def pauseThreading(self,status):
+    #     if status == 'pause':
+    #         self.pause = PauseThread()
+    #         self.pause.start()
+    #         self.pause.join()
+    #     elif status == 'goon':
 
-            self.pause.raiseStop()
+    #         self.pause.raiseStop()
 
 
     def run(self):
@@ -169,6 +192,7 @@ class Model(Thread,QObject):
 
                 except socket.timeout:
                     print('time out')
+                    print(threading.enumerate())
                 except Exception as e:
                     if e.winerror != 10038:
                         self.warningPause.emit('接收,'+str(e))
@@ -186,21 +210,37 @@ class Model(Thread,QObject):
         return (timeShow+'.xls', 'R' + timeShow)
 
 
-class stopedThread(Thread):
-    """docstring for stopedThread"""
-    def __init__(self,*args, **kwargs ):
-        super(stopedThread, self).__init__(*args, **kwargs)
+class StopedThread(Thread):
+    """docstring for StopedThread"""
+    def __init__(self,):
+        super(StopedThread, self).__init__()
         self.daemon = True
+        self.break_ = False
         # self.arg = arg
 
-    def raiseStop(self):
-        self.beforeRaise()
-        raise RuntimeWarning()
+    # def raiseStop(self):
+    #     self.beforeRaise()
+    #     raise RuntimeWarning()
 
-    def beforeRaise(self):
-        pass
+    # def beforeRaise(self):
+    #     pass
+    def childThread(self, target, args, daemon):
+        Thread(target = target, args = args, daemon = True).start()
 
-class PauseThread(stopedThread):
+    def run(self):
+        whileStats = True
+        while whileStats:
+            time.sleep(0.5)
+            if self.break_ == True:
+                whileStats = False
+                # print('while ',whileStats)
+
+        print('father',self.is_alive())
+
+    def setBreak(self):
+        self.break_ = True
+
+class PauseThread(StopedThread):
     """docstring for PauseThread"""
     def __init__(self, ):
         super(PauseThread, self).__init__()
@@ -216,6 +256,21 @@ class StopThreadExcept(Exception):
         super(StopThreadExcept, self).__init__()
         # self.arg = arg
 
+
+class StoppableThread(threading.Thread):
+    """Thread class with a stop() method. The thread itself has to check
+    regularly for the stopped() condition."""
+
+    def __init__(self, *args, **kwargs):
+        super(StoppableThread, self).__init__(*args, **kwargs)
+        self._stop = threading.Event()
+
+    def stop(self):
+        self._stop.set()
+        self._stop.wait()
+
+    def stopped(self):
+        return self._stop.isSet()
 
 
 class XlsWrite(object):
@@ -247,4 +302,9 @@ class XlsWrite(object):
                             col = col.decode('utf-8')
                         self.booksheet.write(j+1, i, col)
             self.booksheet.write(0, 6, self.xlsCommit)
-            self.workbook.save(self.fileName)
+            try:
+                self.workbook.save(self.fileName)
+            except PermissionError:
+                fileName = 'script\\xlsdata\\' + str(int(time.time())) + '.xls'
+                self.workbook.save(fileName)
+

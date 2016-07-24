@@ -16,6 +16,7 @@ class View(QMainWindow,Ui_MainWindow):
     returnCheck = pyqtSignal(object)
     manageThread = pyqtSignal(object)
     pauseStatus = pyqtSignal(object)
+    saveXls = pyqtSignal(object)
 
 
     def __init__(self,):
@@ -47,6 +48,8 @@ class View(QMainWindow,Ui_MainWindow):
 
         self.isConnect = False
 
+        # self.saveCurrent.clicked.connect(self._saveXls)
+
     def _toServer(self):
         self.save.setDisabled(False)
         ip = self.ipaddr.text()
@@ -56,6 +59,7 @@ class View(QMainWindow,Ui_MainWindow):
 
     def _manageThread(self):
         print('clicked')
+
         if self.isConnect:
             if self.save.status == 'start':
                 try:
@@ -66,6 +70,7 @@ class View(QMainWindow,Ui_MainWindow):
                 if isset:
                     self.save.setStop()
             elif self.save.status == 'stop':
+                self.save.setDisabled(True)
                 self._stopThread()
                 self.save.setStart()
         else:
@@ -108,7 +113,7 @@ class View(QMainWindow,Ui_MainWindow):
         self.manageThread.emit('stop')
 
     def enableSaveButton(self,_bool):
-        self.save.setDisabled(_bool)
+        self.save.setEnabled(_bool)
 
     def _selectAllWave(self):
         if self.selectAllWave.isChecked():
@@ -134,6 +139,9 @@ class View(QMainWindow,Ui_MainWindow):
 
     def _pauseStatus(self):
         self.pauseStatus.emit(self.pause.status)
+
+    # def _saveXls(self):
+    #     self.saveXls.emit(True)
 
     # @pyqtSlot(str)
     def warningBox(self,text):

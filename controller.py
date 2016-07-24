@@ -16,7 +16,8 @@ class Controller(QObject):
         self._view.checked.connect(self._model.getData)
         self._view.returnCheck.connect(self._model.returnCheck)
         self._view.manageThread.connect(self._model.manageThreading)
-        self._view.pauseStatus.connect(self._model.pauseThreading)
+        self._view.saveCurrent.clicked.connect(self._model.saveXls)
+        # self._view.pauseStatus.connect(self._model.pauseThreading)
 
 
         self._model.warningPause.connect(self._view.warningBox)

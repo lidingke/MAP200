@@ -308,7 +308,7 @@
      <item row="0" column="1">
       <widget class="QLineEdit" name="ipaddr">
        <property name="text">
-        <string>192.168.0.200</string>
+        <string>localhost</string>
        </property>
       </widget>
      </item>
@@ -356,6 +356,13 @@
       <widget class="QCheckBox" name="returnLossCheck">
        <property name="text">
         <string>需测回损</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QPushButton" name="saveCurrent">
+       <property name="text">
+        <string>临时保存</string>
        </property>
       </widget>
      </item>
@@ -445,14 +452,6 @@
      </item>
     </layout>
    </widget>
-   <zorder>groupBox</zorder>
-   <zorder>groupBox_2</zorder>
-   <zorder>layoutWidget</zorder>
-   <zorder>layoutWidget</zorder>
-   <zorder>layoutWidget</zorder>
-   <zorder>save4Replace</zorder>
-   <zorder>returnLossCheck</zorder>
-   <zorder>pause4Replace</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
