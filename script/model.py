@@ -3,10 +3,9 @@ import threading
 from threading import Thread
 import time
 import xlwt
-from PyQt5.QtCore import QObject, pyqtSignal,
+from PyQt5.QtCore import QObject, pyqtSignal
 import pdb
 import sys
-sys.path.append("..")
 from script.datahand import DataHand
 # import pdb
 

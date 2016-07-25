@@ -2,7 +2,7 @@ from script.UI.mainUI import Ui_MainWindow
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QPushButton
 from PyQt5.QtCore import pyqtSignal , pyqtSlot
 
-from script.toolkit import SaveButton, #PauseButton
+from script.toolkit import SaveButton#, PauseButton
 # from script.model import StopThreadExcept
 
 import pdb

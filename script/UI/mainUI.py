@@ -245,7 +245,7 @@ class Ui_MainWindow(object):
         self.wave1550.setText(_translate("MainWindow", "1550nm"))
         self.wave1625.setText(_translate("MainWindow", "1625nm"))
         self.label.setText(_translate("MainWindow", "IP："))
-        self.ipaddr.setText(_translate("MainWindow", "localhost"))
+        self.ipaddr.setText(_translate("MainWindow", "192.168.0.200"))
         self.connect.setText(_translate("MainWindow", "连接"))
         self.label_2.setText(_translate("MainWindow", "Port："))
         self.port.setText(_translate("MainWindow", "8100"))
