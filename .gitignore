@@ -2,3 +2,5 @@
 *.pyc
 *.pickle
 /xlsdata
+/build
+/old

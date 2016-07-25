@@ -1,16 +1,11 @@
-# Task List
-# database
-# start status
-
 import sys
-# import sys
-# sys.path.append("..")
+
 # Library imports
 from PyQt5.QtWidgets import QApplication
 
 # Local imports
-from script.controller import Controller
-from    script.view        import View
+from controller import Controller
+from    view        import View
 
 if __name__ == '__main__':
     app         = QApplication(sys.argv)

@@ -3,7 +3,7 @@ import threading
 from threading import Thread
 import time
 import xlwt
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
+from PyQt5.QtCore import QObject, pyqtSignal,
 import pdb
 import sys
 sys.path.append("..")
@@ -305,6 +305,6 @@ class XlsWrite(object):
             try:
                 self.workbook.save(self.fileName)
             except PermissionError:
-                fileName = 'script\\xlsdata\\' + str(int(time.time())) + '.xls'
+                fileName = 'script\\xlsdata\\' + 'temp' + str(int(time.time())) + '.xls'
                 self.workbook.save(fileName)
 
