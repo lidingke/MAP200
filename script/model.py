@@ -71,8 +71,6 @@ class Model(Thread,QObject):
         else:
             self.needStop = False
 
-            # except Exception:
-            #     self.warningPause.emit('线程已终止')
 
     def _getDataFun(self,channel,wave,stepNtime):
         switchStep, switchTime, testStep, testTime = stepNtime
@@ -97,6 +95,7 @@ class Model(Thread,QObject):
                 time.sleep(testStep*60)
             # print('xls',self.data)
         # fileName = self._fileName()
+        self.saveReady.emit(True)
         self.finallySave()
 
         # self.data.append(parameter)
@@ -123,7 +122,6 @@ class Model(Thread,QObject):
         # self.dataGeted = [('测试次数','通道数','波长','IL','ORL'),self.dataGeted]
         xlsCommit  =' 时长:' + str(self.testStep) + '分，次数' + str(self.testTime)
         XlsWrite(fileName = self.fileName, xlsContain = result, xlsCommit = (xlsCommit,self.wavelenght)).runSave()
-        # self.data =
 
 
     def _testLoop(self,channel,wave,step,time_):
@@ -167,6 +165,7 @@ class Model(Thread,QObject):
                     insertLoss ={},returnLoss ={}'.format(x,y,insertLoss,returnLoss))
                 if self.needStop == True:
                     print('needStop in _testLoop', self.needStop)
+                    self.needStop = False
                     return
                 time.sleep(step)
 
@@ -290,17 +289,18 @@ class XlsWrite(object):
             # pdb.set_trace()
             # workbook.add_sheet('Sheet2')
             self.booksheet.write(0,0,'次数')
-            self.booksheet.write(0,0,'通道')
-            for x in range(2,4):
+            self.booksheet.write(0,1,'通道')
+            for x in [2,2+len(self.wavelength)]:
                 for i,row in enumerate(self.wavelength):
                     self.booksheet.write(0, i + x, str(row))
-
+                    print('xirow:',x,i,row)
+            #write data
             for i,row in enumerate(self.xlsContain):
                     for j,col in enumerate(row):
                         if type(col) == bytes:
                             col = col.decode('utf-8')
                         self.booksheet.write(j+1, i, col)
-            self.booksheet.write(0, 6, self.xlsCommit)
+            self.booksheet.write(0, 2+len(self.wavelength)*2, self.xlsCommit)
             try:
                 self.workbook.save(self.fileName)
             except PermissionError:

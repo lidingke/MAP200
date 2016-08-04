@@ -58,8 +58,6 @@ class View(QMainWindow,Ui_MainWindow):
         self.ipNport.emit(ip,port)
 
     def _manageThread(self):
-        print('clicked')
-
         if self.isConnect:
             if self.save.status == 'start':
                 try:
@@ -114,6 +112,10 @@ class View(QMainWindow,Ui_MainWindow):
 
     def enableSaveButton(self,_bool):
         self.save.setEnabled(_bool)
+        # print('get in enableSaveButton')
+        if _bool:
+            # pass
+            self.save.setStart()
 
     def _selectAllWave(self):
         if self.selectAllWave.isChecked():
