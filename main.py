@@ -17,7 +17,10 @@ from    script.view        import View
 
 if __name__ == '__main__':
     #ADD THE FOLLOWING BEFORE CREATING A QApplication()
-    QCoreApplication.setLibraryPaths(['C:\\Users\\lidingke\\Envs\\py34qt5\\Lib\\site-packages\\PyQt5\\plugins'])
+    try:
+        QCoreApplication.setLibraryPaths(['C:\\Users\\lidingke\\Envs\\py34qt5\\Lib\\site-packages\\PyQt5\\plugins'])
+    except Exception as e:
+        pass
 
     #Ensure path was added and correct
     # print(QCoreApplication.libraryPaths())

@@ -168,6 +168,7 @@ class View(QMainWindow,Ui_MainWindow):
         self.CH8,
         self.CH9,
         self.CH10,
+        self.CH11,
         self.CH12,
         self.CH13,
         self.CH14,

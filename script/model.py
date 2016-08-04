@@ -288,12 +288,19 @@ class XlsWrite(object):
         def runSave(self):
             # pdb.set_trace()
             # workbook.add_sheet('Sheet2')
+            #title
             self.booksheet.write(0,0,'次数')
             self.booksheet.write(0,1,'通道')
-            for x in [2,2+len(self.wavelength)]:
-                for i,row in enumerate(self.wavelength):
-                    self.booksheet.write(0, i + x, str(row))
-                    print('xirow:',x,i,row)
+            # for x in [2,2+len(self.wavelength)]:
+            x = 2
+            for i,row in enumerate(self.wavelength):
+                self.booksheet.write(0, i + x, str(row))
+                # print('xirow:',x,i,row)
+
+            x = 2+len(self.wavelength)
+            for i,row in enumerate(self.wavelength):
+                self.booksheet.write(0, i + x, (str(row)+"(IL)"))
+                # print('xirow:',x,i,row)
             #write data
             for i,row in enumerate(self.xlsContain):
                     for j,col in enumerate(row):
